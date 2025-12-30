@@ -16,6 +16,8 @@
 | `allowed_domains` | array<string> | ウィジェットの表示を許可するドメイン（プロトコルなし）のリスト。 |
 | `theme_color`     | string        | ウィジェットのテーマカラー名（例: `blue`, `emerald`）。          |
 | `created_at`      | timestamp     | ドキュメントの作成日時（Firestore サーバータイムスタンプ）。     |
+| `tenant_uid`      | string        | Firebaseが自動で生成するランダムなID。     |
+
 
 ## 3. 処理フロー
 
