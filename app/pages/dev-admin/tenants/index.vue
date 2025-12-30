@@ -8,8 +8,6 @@ import {
   limit,
   Timestamp,
 } from "firebase/firestore";
-import { ref, onMounted } from "vue";
-import { useNuxtApp } from "#app";
 
 // --- 1. 型定義 ---
 interface Tenant {

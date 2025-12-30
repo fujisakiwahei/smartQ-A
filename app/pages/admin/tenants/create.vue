@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { ref } from "vue";
+import { useNuxtApp, useRouter } from "#app";
+import { COLOR_OPTIONS } from "~/utils/constants";
 
 const { $db } = useNuxtApp();
 const router = useRouter();
@@ -14,16 +17,7 @@ const form = ref({
 const isSubmitting = ref(false);
 
 // テーマカラーの選択肢
-const colorOptions = [
-  { label: "Basic", value: "basic", hex: "bg-blue-500" },
-  { label: "Emerald", value: "emerald", hex: "bg-emerald-500" },
-  { label: "Indigo", value: "indigo", hex: "bg-indigo-500" },
-  { label: "Violet", value: "violet", hex: "bg-violet-500" },
-  { label: "Rose", value: "rose", hex: "bg-rose-500" },
-  { label: "Amber", value: "amber", hex: "bg-amber-500" },
-  { label: "Slate", value: "slate", hex: "bg-slate-500" },
-  { label: "Cyan", value: "cyan", hex: "bg-cyan-500" },
-];
+const colorOptions = COLOR_OPTIONS;
 
 // テナント登録処理
 const handleCreateTenant = async () => {
@@ -55,29 +49,29 @@ const handleCreateTenant = async () => {
 
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 sm:p-8">
-    <UContainer>
-      <div class="max-w-lg mx-auto">
-        <UButton
-          to="/admin/tenants"
-          icon="i-heroicons-arrow-left"
-          variant="ghost"
-          color="neutral"
-          class="mb-4"
-        >
-          企業一覧に戻る
-        </UButton>
+    <div class="max-w-lg mx-auto">
+      <UButton
+        to="/admin/tenants"
+        icon="i-heroicons-arrow-left"
+        variant="ghost"
+        color="neutral"
+        class="mb-4"
+      >
+        企業一覧に戻る
+      </UButton>
 
-        <UCard>
-          <template #header>
-            <h1 class="text-xl font-bold flex items-center gap-2">
-              <UIcon name="i-heroicons-plus-circle" class="text-primary-500" />
-              新規企業登録
-            </h1>
-          </template>
+      <UCard>
+        <template #header>
+          <h1 class="text-xl font-bold flex items-center gap-2">
+            <UIcon name="i-heroicons-plus-circle" class="text-primary-500" />
+            新規企業登録
+          </h1>
+        </template>
 
-          <form @submit.prevent="handleCreateTenant" class="space-y-8">
-            <!-- 企業名セクション -->
-            <section class="space-y-3">
+        <form @submit.prevent="handleCreateTenant" class="space-y-8">
+          <!-- 企業名セクション -->
+          <section class="space-y-3">
+            <div>
               <div
                 class="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300"
               >
@@ -97,10 +91,12 @@ const handleCreateTenant = async () => {
                   class="w-full h-10 flex"
                 />
               </UFormGroup>
-            </section>
+            </div>
+          </section>
 
-            <!-- 許可ドメインセクション -->
-            <section class="space-y-3">
+          <!-- 許可ドメインセクション -->
+          <section class="space-y-3">
+            <div>
               <div
                 class="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300"
               >
@@ -124,10 +120,12 @@ const handleCreateTenant = async () => {
                   />
                 </div>
               </UFormGroup>
-            </section>
+            </div>
+          </section>
 
-            <!-- テーマカラーセクション -->
-            <section class="space-y-3">
+          <!-- テーマカラーセクション -->
+          <section class="space-y-3">
+            <div>
               <div
                 class="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300"
               >
@@ -158,7 +156,6 @@ const handleCreateTenant = async () => {
                       name="i-heroicons-check"
                       class="text-white w-5 h-5 drop-shadow-md"
                     />
-                    <!-- ツールチップ風のナビゲーション -->
                     <span
                       class="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10"
                     >
@@ -167,26 +164,26 @@ const handleCreateTenant = async () => {
                   </div>
                 </div>
               </UFormGroup>
-            </section>
-
-            <div
-              class="w-fit mt-6 mx-auto flex justify-end gap-3 dark:border-gray-800"
-            >
-              <UButton to="/admin/tenants" variant="ghost" color="neutral">
-                キャンセル
-              </UButton>
-              <UButton
-                type="submit"
-                size="lg"
-                :loading="isSubmitting"
-                icon="i-heroicons-check-badge"
-              >
-                登録を完了する
-              </UButton>
             </div>
-          </form>
-        </UCard>
-      </div>
-    </UContainer>
+          </section>
+
+          <div
+            class="w-fit mt-6 mx-auto flex justify-end gap-3 dark:border-gray-800"
+          >
+            <UButton to="/admin/tenants" variant="ghost" color="neutral">
+              キャンセル
+            </UButton>
+            <UButton
+              type="submit"
+              size="lg"
+              :loading="isSubmitting"
+              icon="i-heroicons-check-badge"
+            >
+              登録を完了する
+            </UButton>
+          </div>
+        </form>
+      </UCard>
+    </div>
   </div>
 </template>

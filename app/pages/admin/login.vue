@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { ref } from "vue";
+import { useNuxtApp } from "#app";
 
 const { $auth } = useNuxtApp();
 const email = ref("");
