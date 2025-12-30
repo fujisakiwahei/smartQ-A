@@ -1,23 +1,51 @@
-# Database Schema (Firestore)
+# Firestore データ構造定義 (Schema)
 
-## tenants (Collection)
-- `name`: string (企業名)
-- `allowed_domains`: array (許可ドメインリスト)
-- `theme_color`: string (ウィジェットカラー)
-- `created_at`: timestamp
+**最終更新日: 2025-12-30**
 
-### tenants/{id}/categories (Sub-collection)
-- `name`: string (カテゴリ名)
-- `description`: string (AI補足説明：最大350文字)
+## 1. tenants (Collection)
 
-### tenants/{id}/knowledge_base (Sub-collection)
-- `question`: string
-- `answer`: string
-- `category_ids`: array (関連カテゴリID)
+システムを利用する企業（テナント）の基本設定を保持するメインコレクションです。
 
-## chat_logs (Collection)
-- `tenant_id`: string (参照)
-- `user_query`: string
-- `ai_response`: string
-- `detected_category`: string
-- `timestamp`: timestamp
+| フィールド名      | 型              | 説明                               | 例                   |
+| :---------------- | :-------------- | :--------------------------------- | :------------------- |
+| `id`              | `string`        | ドキュメント ID (自動発行)         | `7zX2p...`           |
+| `name`            | `string`        | 企業名                             | `"株式会社テスト"`   |
+| `allowed_domains` | `array<string>` | 埋め込みを許可するドメインリスト   | `["localhost:3000"]` |
+| `theme_color`     | `string`        | チャットウィジェットのメインカラー | `"#3B82F6"`          |
+| `created_at`      | `timestamp`     | データの作成日時                   | `2025/12/30 14:00`   |
+
+### 1-1. tenants/{id}/categories (Sub-collection)
+
+AI が質問のカテゴリを判定する際に参照する、その企業専用のカテゴリ定義です。
+
+| フィールド名  | 型       | 説明                                                 | 例                                         |
+| :------------ | :------- | :--------------------------------------------------- | :----------------------------------------- |
+| `id`          | `string` | カテゴリ ID (自動発行)                               | `cn64Q3jCtipL44jdkxO1`                     |
+| `name`        | `string` | カテゴリ名（AI が選択する選択肢）                    | `"契約について"`                           |
+| `description` | `string` | AI が判定を正確に行うための補足説明（最大 350 文字） | `"利用規約や解約方法に関するガイドライン"` |
+
+### 1-2. tenants/{id}/knowledge_base (Sub-collection)
+
+AI が回答を生成する際に検索・参照する Q&A データ群です。
+
+| フィールド名   | 型              | 説明                                | 例                                                     |
+| :------------- | :-------------- | :---------------------------------- | :----------------------------------------------------- |
+| `id`           | `string`        | ナレッジ ID (自動発行)              | `kb_001`                                               |
+| `question`     | `string`        | 想定される質問文                    | `"解約の手続きはどうすればいいですか？"`               |
+| `answer`       | `string`        | AI の回答のベースとなる回答文       | `"マイページの「契約設定」からお手続きいただけます。"` |
+| `category_ids` | `array<string>` | 関連するカテゴリの ID（動的参照用） | `["cn64Q3jCtipL44jdkxO1"]`                             |
+
+---
+
+## 2. chat_logs (Collection)
+
+全企業のチャット履歴を保存する、分析・ログ用のトップレベルコレクションです。
+
+| フィールド名            | 型              | 説明                                               | 例                                      |
+| :---------------------- | :-------------- | :------------------------------------------------- | :-------------------------------------- |
+| `id`                    | `string`        | ログ ID (自動発行)                                 | `log_001`                               |
+| `tenant_id`             | `string`        | どの企業のログかを示す ID（`tenants` ID への参照） | `7zX2p...`                              |
+| `user_query`            | `string`        | ユーザーが実際に入力した質問内容                   | `"料金プランを詳しく教えて"`            |
+| `ai_response`           | `string`        | AI が生成してユーザーに返した回答内容              | `"月額1,000円からご利用いただけます。"` |
+| `detected_category_ids` | `array<string>` | AI によって判定されたカテゴリ ID（複数選択対応）   | `["cat_002"]`                           |
+| `timestamp`             | `timestamp`     | 会話が発生した日時                                 | `2025/12/30 15:00`                      |
