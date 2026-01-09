@@ -484,3 +484,4 @@ SFC（`.vue`）内の `<script setup>` で **`</script>` という文字列を�
 - ③ categories / knowledge（CRUD の基本）
 - ④ chat-logs（フィルタ＋詳細）
 - ⑤ dashboard（集計＋グラフ）
+
