@@ -10,6 +10,13 @@ export default defineNuxtConfig({
 
   routeRules: {
     "/": { prerender: true },
+    "/widget": {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Security-Policy": "frame-ancestors *",
+        "X-Frame-Options": "ALLOWALL",
+      },
+    },
   },
 
   compatibilityDate: "2025-01-15",

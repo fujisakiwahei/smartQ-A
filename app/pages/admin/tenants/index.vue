@@ -1,162 +1,163 @@
 <script setup lang="ts">
+import type {
+  Timestamp } from 'firebase/firestore'
 import {
   collection,
   getDocs,
   query,
   where,
   orderBy,
-  limit,
-  Timestamp,
-} from "firebase/firestore";
-import { ref, onMounted } from "vue";
-import { useNuxtApp } from "#app";
+  limit
+} from 'firebase/firestore'
+import { ref, onMounted } from 'vue'
+import { useNuxtApp } from '#app'
 
 // --- 1. 型定義 ---
 interface Tenant {
-  id: string;
-  name: string;
-  allowed_domains: string[];
-  theme_color: string;
-  admin_uid?: string;
-  created_at: any;
+  id: string
+  name: string
+  allowed_domains: string[]
+  theme_color: string
+  admin_uid?: string
+  created_at: any
 }
 
 interface Category {
-  id: string;
-  name: string;
-  description: string;
+  id: string
+  name: string
+  description: string
 }
 
 interface Knowledge {
-  id: string;
-  question: string;
-  answer: string;
-  category_ids?: string[];
+  id: string
+  question: string
+  answer: string
+  category_ids?: string[]
 }
 
 interface ChatLog {
-  id: string;
-  user_query: string;
-  ai_response: string;
-  detected_category_ids: string[];
-  created_at: any;
+  id: string
+  user_query: string
+  ai_response: string
+  detected_category_ids: string[]
+  created_at: any
 }
 
 // --- 2. 状態管理 ---
-const { $db } = useNuxtApp();
-const tenants = ref<Tenant[]>([]);
-const selectedTenant = ref<Tenant | null>(null);
-const categories = ref<Category[]>([]);
-const knowledgeBase = ref<Knowledge[]>([]);
-const chatLogs = ref<ChatLog[]>([]);
+const { $db } = useNuxtApp()
+const tenants = ref<Tenant[]>([])
+const selectedTenant = ref<Tenant | null>(null)
+const categories = ref<Category[]>([])
+const knowledgeBase = ref<Knowledge[]>([])
+const chatLogs = ref<ChatLog[]>([])
 
-const loadingList = ref(true);
-const loadingDetails = ref(false);
+const loadingList = ref(true)
+const loadingDetails = ref(false)
 
 // テーブルの列定義
 const tenantColumns: any[] = [
-  { key: "name", label: "企業名" },
-  { key: "created_at", label: "登録日" },
-];
+  { key: 'name', label: '企業名' },
+  { key: 'created_at', label: '登録日' }
+]
 
 // --- 3. データの取得関数 ---
 
 // 全企業リストの取得
 const fetchTenants = async () => {
-  loadingList.value = true;
+  loadingList.value = true
   try {
-    const q = query(collection($db, "tenants"), orderBy("created_at", "desc"));
-    const snap = await getDocs(q);
+    const q = query(collection($db, 'tenants'), orderBy('created_at', 'desc'))
+    const snap = await getDocs(q)
     tenants.value = snap.docs.map(
-      (doc) =>
+      doc =>
         ({
           id: doc.id,
           ...doc.data(),
           created_at:
             (doc.data().created_at as Timestamp)
               ?.toDate()
-              .toLocaleDateString("ja-JP") || "-",
+              .toLocaleDateString('ja-JP') || '-'
         } as Tenant)
-    );
+    )
   } catch (e) {
-    console.error("Tenants fetch error:", e);
+    console.error('Tenants fetch error:', e)
   } finally {
-    loadingList.value = false;
+    loadingList.value = false
   }
-};
+}
 
 // 選択した企業の詳細データを取得
 const selectTenant = async (tenant: Tenant) => {
-  selectedTenant.value = tenant;
-  loadingDetails.value = true;
+  selectedTenant.value = tenant
+  loadingDetails.value = true
 
   // 初期化
-  categories.value = [];
-  knowledgeBase.value = [];
-  chatLogs.value = [];
+  categories.value = []
+  knowledgeBase.value = []
+  chatLogs.value = []
 
   try {
     // A. カテゴリ一覧 (サブコレクション)
     const catSnap = await getDocs(
-      collection($db, "tenants", tenant.id, "categories")
-    );
+      collection($db, 'tenants', tenant.id, 'categories')
+    )
     categories.value = catSnap.docs.map(
-      (doc) => ({ id: doc.id, ...doc.data() } as Category)
-    );
+      doc => ({ id: doc.id, ...doc.data() } as Category)
+    )
 
     // B. 想定Q&A一覧 (サブコレクション)
     const knSnap = await getDocs(
-      collection($db, "tenants", tenant.id, "knowledge_base")
-    );
+      collection($db, 'tenants', tenant.id, 'knowledge_base')
+    )
     knowledgeBase.value = knSnap.docs.map(
-      (doc) => ({ id: doc.id, ...doc.data() } as Knowledge)
-    );
+      doc => ({ id: doc.id, ...doc.data() } as Knowledge)
+    )
 
     // C. 最新10件のチャットログ (グローバルコレクションからフィルタ)
     const logQuery = query(
-      collection($db, "chat_logs"),
-      where("tenant_id", "==", tenant.id), // ドキュメント上のフィールド名に合わせる
-      orderBy("created_at", "desc"),
+      collection($db, 'chat_logs'),
+      where('tenant_id', '==', tenant.id), // ドキュメント上のフィールド名に合わせる
+      orderBy('created_at', 'desc'),
       limit(10)
-    );
-    const logSnap = await getDocs(logQuery);
+    )
+    const logSnap = await getDocs(logQuery)
     chatLogs.value = logSnap.docs.map(
-      (doc) =>
+      doc =>
         ({
           id: doc.id,
           ...doc.data(),
           created_at:
             (doc.data().created_at as Timestamp)
               ?.toDate()
-              .toLocaleString("ja-JP") || "-",
+              .toLocaleString('ja-JP') || '-'
         } as ChatLog)
-    );
+    )
   } catch (e) {
-    console.error("Details fetch error:", e);
+    console.error('Details fetch error:', e)
   } finally {
-    loadingDetails.value = false;
+    loadingDetails.value = false
   }
-};
+}
 
 // --- 4. ライフサイクル ---
 onMounted(() => {
-  fetchTenants();
-});
+  fetchTenants()
+})
 
 // テーマカラーの適用クラス
 const getThemeColorClass = (color: string) => {
   const colors: Record<string, string> = {
-    basic: "text-blue-600 bg-blue-50 dark:bg-blue-900/20",
-    emerald: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20",
-    indigo: "text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20",
-    violet: "text-violet-600 bg-violet-50 dark:bg-violet-900/20",
-    rose: "text-rose-600 bg-rose-50 dark:bg-rose-900/20",
-    amber: "text-amber-600 bg-amber-50 dark:bg-amber-900/20",
-    slate: "text-slate-600 bg-slate-50 dark:bg-slate-900/20",
-    cyan: "text-cyan-600 bg-cyan-50 dark:bg-cyan-900/20",
-  };
-  return colors[color] || colors.basic;
-};
+    basic: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
+    emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20',
+    indigo: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20',
+    violet: 'text-violet-600 bg-violet-50 dark:bg-violet-900/20',
+    rose: 'text-rose-600 bg-rose-50 dark:bg-rose-900/20',
+    amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20',
+    slate: 'text-slate-600 bg-slate-50 dark:bg-slate-900/20',
+    cyan: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/20'
+  }
+  return colors[color] || colors.basic
+}
 </script>
 
 <template>
@@ -168,11 +169,18 @@ const getThemeColorClass = (color: string) => {
           <div
             class="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-full text-primary-600"
           >
-            <UIcon name="i-heroicons-building-office-2" class="w-6 h-6" />
+            <UIcon
+              name="i-heroicons-building-office-2"
+              class="w-6 h-6"
+            />
           </div>
           <div>
-            <p class="text-sm text-gray-500">総企業数</p>
-            <p class="text-2xl font-bold">{{ tenants.length }}</p>
+            <p class="text-sm text-gray-500">
+              総企業数
+            </p>
+            <p class="text-2xl font-bold">
+              {{ tenants.length }}
+            </p>
           </div>
         </div>
       </UCard>
@@ -184,13 +192,16 @@ const getThemeColorClass = (color: string) => {
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
-              <h3 class="font-bold">企業一覧</h3>
+              <h3 class="font-bold">
+                企業一覧
+              </h3>
               <UButton
                 to="/admin/tenants/create"
                 icon="i-heroicons-plus"
                 size="xs"
-                >新規</UButton
               >
+                新規
+              </UButton>
             </div>
           </template>
 
@@ -226,7 +237,10 @@ const getThemeColorClass = (color: string) => {
                 </UBadge>
               </div>
             </div>
-            <div v-if="loadingList" class="p-8 text-center">
+            <div
+              v-if="loadingList"
+              class="p-8 text-center"
+            >
               <USpin class="mx-auto" />
             </div>
             <div
@@ -241,7 +255,10 @@ const getThemeColorClass = (color: string) => {
 
       <!-- 右側：詳細表示 -->
       <div class="lg:col-span-8">
-        <div v-if="selectedTenant" class="space-y-6">
+        <div
+          v-if="selectedTenant"
+          class="space-y-6"
+        >
           <!-- 企業基本情報 -->
           <UCard>
             <div class="flex justify-between items-center">
@@ -270,27 +287,41 @@ const getThemeColorClass = (color: string) => {
 
           <!-- 最新チャットログ -->
           <UCard>
-            <template #header
-              ><h4 class="font-bold flex items-center gap-2 text-lg">
+            <template #header>
+              <h4 class="font-bold flex items-center gap-2 text-lg">
                 <UIcon
                   name="i-heroicons-chat-bubble-left-right"
                   class="text-primary-500"
                 />最新のQ&Aログ（10件）
-              </h4></template
+              </h4>
+            </template>
+            <div
+              v-if="loadingDetails"
+              class="p-8 text-center"
             >
-            <div v-if="loadingDetails" class="p-8 text-center">
               <USpin class="mx-auto" />
             </div>
-            <div v-else class="overflow-x-auto">
+            <div
+              v-else
+              class="overflow-x-auto"
+            >
               <table class="w-full text-sm text-left">
                 <thead
                   class="bg-gray-50 dark:bg-gray-800 text-gray-500 uppercase font-medium text-xs"
                 >
                   <tr>
-                    <th class="px-4 py-3">日時</th>
-                    <th class="px-4 py-3">ユーザーの質問</th>
-                    <th class="px-4 py-3">判定カテゴリ</th>
-                    <th class="px-4 py-3">AIの回答</th>
+                    <th class="px-4 py-3">
+                      日時
+                    </th>
+                    <th class="px-4 py-3">
+                      ユーザーの質問
+                    </th>
+                    <th class="px-4 py-3">
+                      判定カテゴリ
+                    </th>
+                    <th class="px-4 py-3">
+                      AIの回答
+                    </th>
                   </tr>
                 </thead>
                 <tbody class="divide-y dark:divide-gray-800">
@@ -341,18 +372,24 @@ const getThemeColorClass = (color: string) => {
 
           <!-- カテゴリ一覧 -->
           <UCard>
-            <template #header
-              ><h4 class="font-bold flex items-center gap-2 text-lg">
+            <template #header>
+              <h4 class="font-bold flex items-center gap-2 text-lg">
                 <UIcon
                   name="i-heroicons-tag"
                   class="text-primary-500"
                 />カテゴリ一覧
-              </h4></template
+              </h4>
+            </template>
+            <div
+              v-if="loadingDetails"
+              class="p-8 text-center"
             >
-            <div v-if="loadingDetails" class="p-8 text-center">
               <USpin class="mx-auto" />
             </div>
-            <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div
+              v-else
+              class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+            >
               <div
                 v-for="cat in categories"
                 :key="cat.id"
@@ -376,18 +413,24 @@ const getThemeColorClass = (color: string) => {
 
           <!-- 想定Q&A -->
           <UCard>
-            <template #header
-              ><h4 class="font-bold flex items-center gap-2 text-lg">
+            <template #header>
+              <h4 class="font-bold flex items-center gap-2 text-lg">
                 <UIcon
                   name="i-heroicons-academic-cap"
                   class="text-primary-500"
                 />想定Q&A
-              </h4></template
+              </h4>
+            </template>
+            <div
+              v-if="loadingDetails"
+              class="p-8 text-center"
             >
-            <div v-if="loadingDetails" class="p-8 text-center">
               <USpin class="mx-auto" />
             </div>
-            <div v-else class="space-y-3">
+            <div
+              v-else
+              class="space-y-3"
+            >
               <div
                 v-for="kb in knowledgeBase"
                 :key="kb.id"
